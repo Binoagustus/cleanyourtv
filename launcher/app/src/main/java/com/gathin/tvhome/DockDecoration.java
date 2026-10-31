@@ -1,5 +1,7 @@
 package com.gathin.tvhome;
 
+import android.animation.ArgbEvaluator;
+import android.animation.ValueAnimator;
 import android.graphics.Canvas;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
@@ -34,6 +36,8 @@ public class DockDecoration extends RecyclerView.ItemDecoration {
     private final boolean singleRow;
     /** dock_band_all: in a single row, the band runs behind every app instead of the dock apps only. */
     private final boolean bandAll;
+    /** Fades the band between wallpaper tints (setTint); null for the cinematic band. */
+    private final ValueAnimator tinted;
 
     /**
      * @param translucent the cinematic shelf's band: the artwork and the glow show through it.
@@ -59,6 +63,31 @@ public class DockDecoration extends RecyclerView.ItemDecoration {
         edge.setStyle(Paint.Style.STROKE);
         edge.setStrokeWidth(density);
         edge.setColor(lightGlass ? 0x38FFFFFF : translucent ? 0x26FFFFFF : 0x1FFFFFFF);
+        tinted = translucent ? null : ValueAnimator.ofObject(new ArgbEvaluator(), 0, 0).setDuration(900);
+    }
+
+    /**
+     * Smoky glass in the wallpaper's colour: the band fades to a darkened tint of the picture behind it, keeping its
+     * opacity. Ignored for the light glass and the cinematic band, which have their own look.
+     */
+    void setTint(int rgb, View parent) {
+        if (lightGlass || tinted == null) return;
+        int alpha = band.getColor() & 0xFF000000;
+        // An average is greyish: push each channel away from the grey (saturation x3), then darken to 50%.
+        int r = (rgb >> 16) & 0xFF, g = (rgb >> 8) & 0xFF, bl = rgb & 0xFF, grey = (r * 3 + g * 6 + bl) / 10;
+        int dark = alpha | smoky(r, grey) << 16 | smoky(g, grey) << 8 | smoky(bl, grey);
+        if (tinted.isRunning()) tinted.cancel();
+        tinted.setObjectValues(band.getColor(), dark);
+        tinted.removeAllUpdateListeners();
+        tinted.addUpdateListener(a -> {
+            band.setColor((Integer) a.getAnimatedValue());
+            parent.invalidate();
+        });
+        tinted.start();
+    }
+
+    private static int smoky(int channel, int grey) {
+        return Math.max(0, Math.min(255, grey + (channel - grey) * 3)) * 50 / 100;
     }
 
     /** Concentric corners: the band's radius is the tiles' radius plus the band's padding around them. */

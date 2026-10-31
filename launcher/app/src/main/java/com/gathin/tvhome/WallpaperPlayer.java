@@ -28,6 +28,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.IntConsumer;
 
 /** Displays and rotates a theme's local wallpaper images while Home is visible. */
 final class WallpaperPlayer {
@@ -259,8 +260,34 @@ final class WallpaperPlayer {
         return key.toString();
     }
 
+    /** The average colour behind the dock of the picture decoded last, and who wants it (the dock band's tint). */
+    private volatile int decodedTint;
+    private int shownTint;
+    private IntConsumer tintListener;
+
+    void setTintListener(IntConsumer listener) {
+        tintListener = listener;
+        if (listener != null && shownTint != 0) listener.accept(shownTint);
+    }
+
+    /** The picture's average colour, from a 32x18 copy. */
+    private static int bottomTint(Bitmap bitmap) {
+        Bitmap small = Bitmap.createScaledBitmap(bitmap, 32, 18, true);
+        long r = 0, g = 0, b = 0, n = 0;
+        for (int y = 0; y < 18; y++) {
+            for (int x = 0; x < 32; x++) {
+                int c = small.getPixel(x, y);
+                r += (c >> 16) & 0xFF; g += (c >> 8) & 0xFF; b += c & 0xFF; n++;
+            }
+        }
+        if (small != bitmap) small.recycle();
+        return 0xFF000000 | (int) (r / n) << 16 | (int) (g / n) << 8 | (int) (b / n);
+    }
+
     /** Puts a picture on screen and releases the previous one after a frame has drawn the new one. */
     private void show(Bitmap bitmap) {
+        shownTint = decodedTint;
+        if (tintListener != null && shownTint != 0) tintListener.accept(shownTint);
         Bitmap old = current;
         current = bitmap;
         // The wallpaper covers the whole root; avoid drawing the fallback colour under it.
@@ -291,6 +318,7 @@ final class WallpaperPlayer {
             Bitmap decoded = BitmapFactory.decodeFile(file.getPath(), options);
             if (decoded == null) return null;
             if (dimColor != 0) new Canvas(decoded).drawColor(dimColor);
+            decodedTint = bottomTint(decoded);
             // One copy in GPU memory instead of a software bitmap plus its texture; the decode stays off the UI
             // thread for rotations, and Home's return no longer uploads 4-8 MB to the GPU.
             Bitmap gpu = decoded.copy(Bitmap.Config.HARDWARE, false);

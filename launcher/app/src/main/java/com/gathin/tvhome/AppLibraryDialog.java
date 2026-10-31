@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -165,9 +166,9 @@ final class AppLibraryDialog {
         panel.setPadding(dp(12), dp(8), dp(12), dp(12));
         panel.setBackgroundResource(R.drawable.glass_panel);
         View decor = activity.getWindow().getDecorView();
-        catalogWidth = Math.min(dp(800), Math.max(dp(200), decor.getWidth() - dp(64)));
+        catalogWidth = Math.min(dp(900), Math.max(dp(200), decor.getWidth() - dp(64)));
         int width = catalogWidth;
-        int height = dp(280);
+        int height = dp(256);
         popup = new PopupWindow(panel, width, height, true);
         popup.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popup.setOutsideTouchable(true);
@@ -281,8 +282,12 @@ final class AppLibraryDialog {
         }
         catalogTime = System.currentTimeMillis();
         Collator collator = Collator.getInstance();
+        // OK opens every app: the library is where hidden_apps live, so they come first in that list's order.
+        List<String> order = okOpens ? Config.load(activity).hiddenApps : Collections.emptyList();
         apps.sort((a, b) -> {
             String pa = a.activityInfo.packageName, pb = b.activityInfo.packageName;
+            int ia = order.indexOf(pa), ib = order.indexOf(pb);
+            if (ia != ib) return ia < 0 ? 1 : ib < 0 ? -1 : Integer.compare(ia, ib);
             if (selectionMode) return LibraryApps.compareCatalog(home.get(pa), label(a), pa,
                     home.get(pb), label(b), pb, collator);
             int priority = LibraryApps.comparePriority(home.get(pa), installTimes.get(pa),
@@ -350,7 +355,7 @@ final class AppLibraryDialog {
 
     private void showCatalog() {
         stopHighlight();
-        resize(catalogWidth, dp(280));
+        resize(catalogWidth, dp(256));
         panel.removeAllViews();
         LinearLayout header = new LinearLayout(activity);
         header.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
@@ -398,7 +403,9 @@ final class AppLibraryDialog {
         list.setItemAnimator(null);
         list.setOverScrollMode(View.OVER_SCROLL_NEVER);
         list.setClipToPadding(false);
-        list.setPadding(dp(10), dp(8), dp(10), dp(8));
+        // A short catalogue sits centred in the panel instead of against its left edge (cards are 124 dp + 12 dp margins).
+        int side = Math.max(dp(10), (catalogWidth - dp(24) - apps.size() * dp(136)) / 2);
+        list.setPadding(side, dp(8), side, dp(8));
         list.setAdapter(new Catalog());
         shelf.addView(list, new FrameLayout.LayoutParams(-1, -1));
         highlight = new GlassView(activity, null);
@@ -610,12 +617,13 @@ final class AppLibraryDialog {
     private final class Catalog extends RecyclerView.Adapter<Row> {
         @NonNull @Override public Row onCreateViewHolder(@NonNull ViewGroup parent, int type) {
             FrameLayout row = new FrameLayout(activity);
-            RecyclerView.LayoutParams params = new RecyclerView.LayoutParams(dp(132), dp(170));
+            RecyclerView.LayoutParams params = new RecyclerView.LayoutParams(dp(124), dp(140));
             params.setMargins(dp(6), dp(2), dp(6), dp(2));
             row.setLayoutParams(params);
             row.setPadding(dp(10), dp(12), dp(10), dp(10));
             row.setFocusableInTouchMode(true);
             row.setClickable(true);
+            row.setStateListAnimator(android.animation.AnimatorInflater.loadStateListAnimator(activity, R.animator.focus_lift));
             LinearLayout content = new LinearLayout(activity);
             content.setOrientation(LinearLayout.VERTICAL);
             content.setGravity(Gravity.CENTER_HORIZONTAL);
@@ -628,7 +636,8 @@ final class AppLibraryDialog {
             name.setId(R.id.title);
             name.setGravity(Gravity.CENTER);
             name.setMaxLines(2);
-            LinearLayout.LayoutParams nameParams = new LinearLayout.LayoutParams(-1, dp(44));
+            // Room for two lines on every card, so the icons line up when a long name wraps.
+            LinearLayout.LayoutParams nameParams = new LinearLayout.LayoutParams(-1, dp(40));
             nameParams.topMargin = dp(10);
             content.addView(name, nameParams);
             TextView status = text("", 11, 0xBBFFFFFF);
@@ -654,7 +663,7 @@ final class AppLibraryDialog {
             boolean home = onHome.test(pkg);
             boolean recent = !selectionMode && LibraryApps.recent(installTimes.getOrDefault(pkg, 0L), catalogTime);
             status.setText(home ? R.string.library_on_home : recent ? R.string.library_recent : R.string.library_add_home);
-            status.setVisibility(home || !okOpens ? View.VISIBLE : View.INVISIBLE);
+            status.setVisibility(home || !okOpens ? View.VISIBLE : View.GONE);
             holder.itemView.setBackground(surface(home ? 0x1475BBA4 : 0x0CFFFFFF, 18));
             View check = holder.itemView.findViewById(R.id.dot);
             check.getLayoutParams().width = dp(home ? 18 : 8);
