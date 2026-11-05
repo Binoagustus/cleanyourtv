@@ -322,6 +322,20 @@
                 android:focusable="false"
                 android:visibility="gone" />
 
+            <TextView
+                android:id="@+id/networkSpeed"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentEnd="true"
+                android:singleLine="true"
+                android:textColor="#D9FFFFFF"
+                android:textSize="14sp"
+                android:fontFamily="@string/font_medium"
+                android:fontFeatureSettings="tnum"
+                android:focusable="false"
+                android:visibility="gone" />
+
             <LinearLayout
                 android:id="@+id/topButtons"
                 android:layout_width="wrap_content"

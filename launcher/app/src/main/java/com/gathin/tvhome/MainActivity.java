@@ -36,6 +36,7 @@ import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
+import android.net.TrafficStats;
 import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -182,6 +183,30 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     /** config show_inputs_pill: false keeps the Inputs pill hidden even when the TV has inputs. */
     private boolean showInputsPill = true;
     private TextView btnWifi;
+    private TextView networkSpeed;
+    private long speedRx, speedTx, speedTime;
+    private final Runnable speedTick = new Runnable() {
+        @Override public void run() {
+            long now = SystemClock.elapsedRealtime();
+            long rx = TrafficStats.getTotalRxBytes();
+            long tx = TrafficStats.getTotalTxBytes();
+            if (rx == TrafficStats.UNSUPPORTED || tx == TrafficStats.UNSUPPORTED) {
+                networkSpeed.setVisibility(View.GONE);
+                return;
+            }
+            long elapsed = now - speedTime;
+            if (speedTime != 0 && elapsed > 0 && rx >= speedRx && tx >= speedTx) {
+                networkSpeed.setText(String.format(Locale.getDefault(),
+                        "↓ %.2f Mbps   ↑ %.2f Mbps",
+                        (rx - speedRx) * 0.008 / elapsed, (tx - speedTx) * 0.008 / elapsed));
+                networkSpeed.setVisibility(View.VISIBLE);
+            }
+            speedRx = rx;
+            speedTx = tx;
+            speedTime = now;
+            handler.postDelayed(this, 1000);
+        }
+    };
     /** The network pill's icon as last set, so a refresh that changes nothing does not lay the top bar out again. */
     private int wifiIcon;
     /** The pills have been filled in once; later resumes refresh them after the first frame. */
@@ -537,6 +562,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             clockRow.addOnLayoutChangeListener(centerGreeting);
         }
         btnWifi = findViewById(R.id.btnWifi);
+        networkSpeed = findViewById(R.id.networkSpeed);
         shamsiDate = findViewById(R.id.shamsiDate);
         stats = findViewById(R.id.stats);
         raceCalendar = cfg.raceCalendar;
@@ -1068,6 +1094,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             pillsShown = true;
         }
         if (showStats) startStats();
+        if (getResources().getBoolean(R.bool.show_network_speed)) {
+            handler.removeCallbacks(speedTick);
+            speedTime = 0;
+            networkSpeed.setVisibility(View.GONE);
+            handler.post(speedTick);
+        }
         if (gameDay != null) gameDay.start();
         sky.update();
         wallpaperPlayer.start();
@@ -1253,6 +1285,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         handler.removeCallbacks(openWhenOnline);
         startPending = null;   // leaving Home before the network came back: the boot's app stays closed
         stopStats();
+        handler.removeCallbacks(speedTick);
         if (gameDay != null) gameDay.stop();
         handler.removeCallbacks(turnTick);
         if (lamp != null) lamp.stop();
