@@ -61,5 +61,21 @@ public class ThemeProvider extends ContentProvider {
     @Override public String getType(Uri uri) { return null; }
     @Override public Cursor query(Uri uri, String[] p, String s, String[] a, String o) { return null; }
     @Override public Uri insert(Uri uri, ContentValues values) { return null; }
-    @Override public int update(Uri uri, ContentValues v, String s, String[] a) { return 0; }
+    @Override public int update(Uri uri, ContentValues v, String s, String[] a) {
+        if (!"refresh".equals(uri.getLastPathSegment())) return 0;
+        File dir = Config.dir(getContext());
+        if (dir == null) return 0;
+        File pending = new File(dir, "wallpaper_next.jpg");
+        android.graphics.BitmapFactory.Options bounds = new android.graphics.BitmapFactory.Options();
+        bounds.inJustDecodeBounds = true;
+        android.graphics.BitmapFactory.decodeFile(pending.getAbsolutePath(), bounds);
+        if (bounds.outWidth < 1 || bounds.outHeight < 1
+                || !pending.renameTo(new File(dir, "wallpaper.jpg"))) return 0;
+        android.content.SharedPreferences choices = getContext().getSharedPreferences(
+                Config.SETTINGS_NAME, android.content.Context.MODE_PRIVATE);
+        choices.edit().remove(Config.WALLPAPER_CHOICE_KEY)
+                .putLong(Config.SETTINGS_REVISION_KEY,
+                        choices.getLong(Config.SETTINGS_REVISION_KEY, 0) + 1).commit();
+        return 1;
+    }
 }

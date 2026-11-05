@@ -1,11 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The TV banner: a sun behind a cloud on a day sky. Drawn for this add-on, no third-party art. -->
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="320dp" android:height="180dp"
-    android:viewportWidth="320" android:viewportHeight="180">
-    <path android:fillColor="#FF1E4A7A" android:pathData="M0,0h320v180h-320z" />
-    <path android:fillColor="#FF2A6AA8" android:pathData="M0,110h320v70h-320z" />
-    <path android:fillColor="#FFFFC94A" android:pathData="M190,72m-34,0a34,34 0,1 1,68 0a34,34 0,1 1,-68 0" />
-    <path android:fillColor="#FFFFFFFF"
-        android:pathData="M110,128h96a22,22 0,0 0,0 -44a30,30 0,0 0,-56 -10a24,24 0,0 0,-40 18a18,18 0,0 0,0 36z" />
+<!-- Gustus Weather's TV artwork: a warm sun behind a soft cloud, light rain, on an evening-blue sky. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="320dp" android:height="180dp" android:viewportWidth="320" android:viewportHeight="180">
+    <path android:pathData="M0,0h320v180h-320z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear" android:startX="0" android:startY="0" android:endX="120" android:endY="200">
+                <item android:offset="0" android:color="#FF1C3F73" /><item android:offset="1" android:color="#FF0B1528" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:pathData="M205,62m-70,0a70,70 0,1 1,140 0a70,70 0,1 1,-140 0">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="radial" android:centerX="205" android:centerY="62" android:gradientRadius="70">
+                <item android:offset="0" android:color="#66FFC864" /><item android:offset="1" android:color="#00FFC864" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:pathData="M205,62m-28,0a28,28 0,1 1,56 0a28,28 0,1 1,-56 0">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear" android:startX="190" android:startY="36" android:endX="222" android:endY="90">
+                <item android:offset="0" android:color="#FFFFE29A" /><item android:offset="1" android:color="#FFFFA93A" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:pathData="M104,124h104a24,24 0,0 0,0 -48a32,32 0,0 0,-60 -10a26,26 0,0 0,-44 20a19,19 0,0 0,0 38z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear" android:startX="150" android:startY="56" android:endX="150" android:endY="124">
+                <item android:offset="0" android:color="#FFFFFFFF" /><item android:offset="1" android:color="#FFC9D6E8" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:strokeColor="#B39CC7F2" android:strokeWidth="3" android:strokeLineCap="round"
+        android:pathData="M124,136l-5,12M146,136l-5,12M168,136l-5,12M190,136l-5,12M135,154l-4,9M157,154l-4,9M179,154l-4,9" />
 </vector>

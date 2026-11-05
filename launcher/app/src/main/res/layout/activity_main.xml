@@ -419,6 +419,86 @@
         </FrameLayout>
     </LinearLayout>
 
+    <!-- Now Playing (MediaBar): sits just above the dock, only while an app has music playing or paused. -->
+    <LinearLayout
+        android:id="@+id/mediaCard"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="66dp"
+        android:background="@drawable/media_card_bg"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:orientation="vertical"
+        android:paddingStart="18dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="8dp"
+        android:paddingBottom="6dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+        <com.gathin.tvhome.EqualizerView
+            android:id="@+id/mediaEq"
+            android:layout_width="22dp"
+            android:layout_height="20dp"
+            android:importantForAccessibility="no" />
+
+        <TextView
+            android:id="@+id/btnMediaSong"
+            style="@style/TopButton"
+            android:maxWidth="460dp"
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:nextFocusLeft="@id/btnMediaSong"
+            android:nextFocusDown="@+id/grid" />
+
+        <TextView
+            android:id="@+id/btnMediaPrev"
+            style="@style/TopButtonIcon"
+            android:contentDescription="@string/media_previous"
+            android:drawableStart="@drawable/ic_skip_previous"
+            android:nextFocusDown="@+id/grid" />
+
+        <TextView
+            android:id="@+id/btnMediaPlay"
+            style="@style/TopButtonIcon"
+            android:contentDescription="@string/media_pause"
+            android:drawableStart="@drawable/ic_pause"
+            android:nextFocusDown="@+id/grid" />
+
+        <TextView
+            android:id="@+id/btnMediaNext"
+            style="@style/TopButtonIcon"
+            android:contentDescription="@string/media_next"
+            android:drawableStart="@drawable/ic_skip_next"
+            android:nextFocusDown="@+id/grid" />
+
+        <TextView
+            android:id="@+id/btnMediaClose"
+            style="@style/TopButtonIcon"
+            android:contentDescription="@string/media_close"
+            android:drawableStart="@drawable/ic_close"
+            android:nextFocusRight="@id/btnMediaClose"
+            android:nextFocusDown="@+id/grid" />
+        </LinearLayout>
+
+        <!-- Progress; focused, Left/Right drag through the song. Hidden for streams with no length. -->
+        <com.gathin.tvhome.SeekView
+            android:id="@+id/mediaSeek"
+            android:layout_width="match_parent"
+            android:layout_height="26dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="12dp"
+            android:layout_marginTop="2dp"
+            android:contentDescription="@string/media_seek" />
+    </LinearLayout>
+
     <!-- The single floating glass highlight that springs between tiles. -->
     <com.gathin.tvhome.GlassView
         android:id="@+id/glass"

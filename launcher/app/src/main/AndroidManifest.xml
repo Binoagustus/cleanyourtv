@@ -228,6 +228,17 @@
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
+        <!-- What is playing, for Home's playback controls (MediaBar); reads no notifications. -->
+        <service
+            android:name=".MediaAccess"
+            android:directBootAware="true"
+            android:exported="true"
+            android:label="@string/home_key_name"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
         <receiver
             android:name=".GuardConfig"
             android:exported="true"

@@ -1,0 +1,7 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
+    <!-- More: three rounded squares and a circle; it turns a quarter when More opens. -->
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="1.6" android:pathData="M5.5,3.5h3a2,2 0,0 1,2 2v3a2,2 0,0 1,-2 2h-3a2,2 0,0 1,-2 -2v-3a2,2 0,0 1,2 -2z" />
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="1.6" android:pathData="M17,7m-3.5,0a3.5,3.5 0,1 1,7 0a3.5,3.5 0,1 1,-7 0" />
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="1.6" android:pathData="M5.5,13.5h3a2,2 0,0 1,2 2v3a2,2 0,0 1,-2 2h-3a2,2 0,0 1,-2 -2v-3a2,2 0,0 1,2 -2z" />
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="1.6" android:pathData="M15.5,13.5h3a2,2 0,0 1,2 2v3a2,2 0,0 1,-2 2h-3a2,2 0,0 1,-2 -2v-3a2,2 0,0 1,2 -2z" />
+</vector>

@@ -11,6 +11,8 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Outline;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
@@ -138,6 +140,8 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     /** item_app.xml: 8dp padding above and below, a 7dp gap and the 22dp name label under the tile. */
     static final float ITEM_EXTRA_DP = 45;
     /** DockDecoration's offsets above and below the dock row. */
+    /** How high a focused tile lifts: its shadow, soft and falling below, is the focus cue (no ring, no border). */
+    static final float FOCUS_LIFT_DP = 18f;
     static final float DOCK_EXTRA_DP = 6 + 12;
     /** Room kept under the last row rows_below_dock asks for (MainActivity places the dock with the same). */
     static final float BOTTOM_ROOM_DP = 30;
@@ -336,6 +340,7 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         docked = 0;
         while (docked < fresh.size() && isDocked(fresh.get(docked))) docked++;
         emptySlots = dockRow && !reordering ? DockSlots.empty(docked, dockSize, fresh.size(), fillDock) : 0;
+        if (showLibrary && fresh.size() == dockSize - 1 && docked == fresh.size()) emptySlots = 0;
         for (int i = 0; i < emptySlots; i++) {
             fresh.add(docked + i, new Entry(Entry.EMPTY, "", new ComponentName(ctx, "empty-dock-slot-" + i),
                     null, null, null, 0));
@@ -398,24 +403,37 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        if (viewType == 1) {
-            View row = LayoutInflater.from(ctx).inflate(R.layout.row_app_library, parent, false);
-            View button = row.findViewById(R.id.btnLibrary);
-            button.setOnClickListener(v -> listener.onLibraryRequested());
-            button.setOnFocusChangeListener((v, focused) -> { if (focused) listener.onLibraryFocused(); });
-            button.setOnKeyListener((v, key, event) -> {
-                if (event.getAction() != KeyEvent.ACTION_DOWN) return false;
-                if (key == KeyEvent.KEYCODE_DPAD_UP) listener.onLibraryUp();
-                return key == KeyEvent.KEYCODE_DPAD_UP || key == KeyEvent.KEYCODE_DPAD_DOWN
-                        || key == KeyEvent.KEYCODE_DPAD_LEFT || key == KeyEvent.KEYCODE_DPAD_RIGHT;
-            });
-            return new RecyclerView.ViewHolder(row) { };
-        }
-        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_app, parent, false);
         float density = parent.getResources().getDisplayMetrics().density;
         int width = parent.getWidth() > 0 ? parent.getWidth() : parent.getMeasuredWidth();
         int inner = width - parent.getPaddingLeft() - parent.getPaddingRight();
         int w = tileWidthPx(inner, parent.getHeight(), dockSize, rowsBelowDock, dockTitle, dockRow, density), h = tileHeightPx(w);
+        if (viewType == 1) {
+            View row = LayoutInflater.from(ctx).inflate(R.layout.row_app_library, parent, false);
+            View button = row.findViewById(R.id.btnLibrary);
+            button.getLayoutParams().width = w;
+            button.getLayoutParams().height = h;
+            View name = row.findViewById(R.id.name);
+            ViewGroup.MarginLayoutParams nameLp = (ViewGroup.MarginLayoutParams) name.getLayoutParams();
+            nameLp.width = w;
+            nameLp.topMargin = h + Math.round(7 * density);
+            button.setOnClickListener(v -> {
+                // The More icon turns a quarter as the panel opens.
+                if (android.animation.ValueAnimator.areAnimatorsEnabled()) v.findViewById(R.id.icon).animate().rotationBy(90f)
+                        .setDuration(380).setInterpolator(new android.view.animation.OvershootInterpolator(1.6f)).start();
+                listener.onLibraryRequested();
+            });
+            button.setOnFocusChangeListener((v, focused) -> {
+                // Lifts on the same soft shadow as the app tiles, so More reads as selected too.
+                v.animate().translationZ(focused ? FOCUS_LIFT_DP * density : 0f).setDuration(180).start();
+                if (focused) listener.onLibraryFocused();
+            });
+            button.setOnKeyListener((v, key, event) -> {
+                if (event.getAction() != KeyEvent.ACTION_DOWN) return false;
+                return key == KeyEvent.KEYCODE_DPAD_DOWN || key == KeyEvent.KEYCODE_DPAD_RIGHT;
+            });
+            return new RecyclerView.ViewHolder(row) { };
+        }
+        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_app, parent, false);
         View card = v.findViewById(R.id.card);
         ViewGroup.LayoutParams cardLp = card.getLayoutParams();
         cardLp.width = w;
@@ -480,11 +498,13 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         h.name.setVisibility(dockKind && restNameAlpha == 0f ? View.INVISIBLE : View.VISIBLE);
         h.inDock = dockKind;
         boolean focused = h.card.isFocused();   // a rebind after reload() can hit the focused tile
+        h.banner.setColorFilter(focused ? null : h.mutedArt);
+        h.icon.setColorFilter(focused ? null : h.mutedArt);
         h.name.setAlpha(focused ? 1f : restNameAlpha);
         h.card.setScaleX(focused && animations ? focusScale() : 1f);
         h.card.setScaleY(focused && animations ? focusScale() : 1f);
         h.card.setTranslationY(focused && advancedEffects && !dockKind ? -4f * ctx.getResources().getDisplayMetrics().density : 0f);
-        h.card.setTranslationZ(focused && advancedEffects ? 8f * ctx.getResources().getDisplayMetrics().density : 0f);
+        h.card.setTranslationZ(focused && advancedEffects ? FOCUS_LIFT_DP * ctx.getResources().getDisplayMetrics().density : 0f);
         h.banner.setScaleX(focused && advancedEffects ? 1.035f : 1f);
         h.banner.setScaleY(focused && advancedEffects ? 1.035f : 1f);
         // A fully opaque banner covers the whole card (centerCrop), so the card's own fill under it is drawn for
@@ -901,6 +921,7 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         final View card;
         /** item_app.xml's tile_bg: the dark card behind an icon tile, or behind a banner that has transparent parts. */
         final Drawable cardBackground;
+        final ColorMatrixColorFilter mutedArt;
         final ImageView banner;
         final ImageView icon;
         final TextView label;
@@ -919,6 +940,9 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             super(v);
             card = v.findViewById(R.id.card);
             cardBackground = card.getBackground();
+            ColorMatrix colors = new ColorMatrix();
+            colors.setSaturation(0);
+            mutedArt = v.getResources().getBoolean(R.bool.muted_tiles) ? new ColorMatrixColorFilter(colors) : null;
             banner = v.findViewById(R.id.banner);
             icon = v.findViewById(R.id.icon);
             label = v.findViewById(R.id.label);
@@ -948,6 +972,8 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             });
 
             card.setOnFocusChangeListener((view, focused) -> {
+                banner.setColorFilter(focused ? null : mutedArt);
+                icon.setColorFilter(focused ? null : mutedArt);
                 view.animate().cancel();
                 banner.animate().cancel();
                 name.animate().cancel();
@@ -967,7 +993,7 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     // frames than it saves. The name just appears instead of fading.
                     view.animate().scaleX(s).scaleY(s)
                             .translationY(focused && advancedEffects && !inDock ? -4f * density : 0f)
-                            .translationZ(focused && advancedEffects ? 8f * density : 0f)
+                            .translationZ(focused && advancedEffects ? FOCUS_LIFT_DP * density : 0f)
                             .setDuration(focused ? Motion.REDUCED_MS : 60)
                             .setInterpolator(new DecelerateInterpolator())
                             .start();
@@ -979,7 +1005,7 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 } else {
                     view.animate().scaleX(s).scaleY(s)
                             .translationY(focused && advancedEffects && !inDock ? -4f * density : 0f)
-                            .translationZ(focused && advancedEffects ? 8f * density : 0f)
+                            .translationZ(focused && advancedEffects ? FOCUS_LIFT_DP * density : 0f)
                             .setDuration(advancedEffects ? (focused ? 220 : 170) : (focused ? 260 : 180))
                             .setInterpolator(focused && !overshoot ? new DecelerateInterpolator(1.5f)
                                     : new OvershootInterpolator(focused ? (advancedEffects ? 0.7f : 1.6f) : 0f))

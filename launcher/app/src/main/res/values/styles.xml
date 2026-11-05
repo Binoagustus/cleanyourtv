@@ -4,6 +4,10 @@
         <item name="android:windowBackground">@android:color/black</item>
         <item name="android:colorBackground">@android:color/black</item>
         <item name="android:windowAnimationStyle">@null</item>
+        <!-- A lifted tile casts a soft shadow that falls below it (tvOS / Android TV "glow" elevation); the framework
+             defaults are too faint to read on a TV across the room. -->
+        <item name="android:spotShadowAlpha">0.42</item>
+        <item name="android:ambientShadowAlpha">0.12</item>
     </style>
 
     <!-- Frosted pill, tvOS style. -->

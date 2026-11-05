@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Gustus Wallpaper's TV artwork: a twilight landscape in a soft frame, moon and stars. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="320dp" android:height="180dp" android:viewportWidth="320" android:viewportHeight="180">
+    <path android:pathData="M0,0h320v180h-320z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear" android:startX="0" android:startY="0" android:endX="0" android:endY="180">
+                <item android:offset="0" android:color="#FF1B1740" /><item android:offset="0.6" android:color="#FF3F2E66" />
+                <item android:offset="1" android:color="#FFB0617A" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:fillColor="#FFF6E7C1" android:pathData="M232,48m-16,0a16,16 0,1 1,32 0a16,16 0,1 1,-32 0" />
+    <path android:fillColor="#FF2E2650" android:pathData="M240,42m-13,0a13,13 0,1 1,26 0a13,13 0,1 1,-26 0" />
+    <path android:fillColor="#CCFFFFFF" android:pathData="M70,30m-1.6,0a1.6,1.6 0,1 1,3.2 0a1.6,1.6 0,1 1,-3.2 0M120,52m-1.2,0a1.2,1.2 0,1 1,2.4 0a1.2,1.2 0,1 1,-2.4 0M160,24m-1.4,0a1.4,1.4 0,1 1,2.8 0a1.4,1.4 0,1 1,-2.8 0M280,80m-1.2,0a1.2,1.2 0,1 1,2.4 0a1.2,1.2 0,1 1,-2.4 0M40,70m-1,0a1,1 0,1 1,2 0a1,1 0,1 1,-2 0" />
+    <path android:fillColor="#FF4A3A78" android:pathData="M0,120L60,84L110,112L170,70L240,110L320,82V180H0Z" />
+    <path android:fillColor="#FF241D44" android:pathData="M0,150L80,116L150,140L220,108L320,140V180H0Z" />
+    <path android:strokeColor="#59FFFFFF" android:strokeWidth="2" android:fillColor="#00000000"
+        android:pathData="M24,14h272a10,10 0,0 1,10 10v132a10,10 0,0 1,-10 10h-272a10,10 0,0 1,-10 -10v-132a10,10 0,0 1,10 -10z" />
+</vector>

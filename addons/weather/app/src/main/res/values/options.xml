@@ -12,4 +12,17 @@
     <string name="temperature_unit" translatable="false">c</string>
     <!-- The temperature now in the other unit too, at the start of the "Feels like" line ("22°C · Feels like 70°"). -->
     <bool name="show_both_units">false</bool>
+    <!-- The place shown until Change city picks another: its name, latitude and longitude. Empty asks on first open. -->
+    <string name="default_place" translatable="false">Asher Residence</string>
+    <string name="default_latitude" translatable="false">8.73</string>
+    <string name="default_longitude" translatable="false">77.68</string>
+    <string name="dream_name" translatable="false">Weather and calendar</string>
+    <string name="set_wallpaper" translatable="false">Set as Home wallpaper</string>
+    <string name="wallpaper_set" translatable="false">Home wallpaper set. Press Home to see it.</string>
+    <string name="wallpaper_failed" translatable="false">Couldn\'t use this picture. Your wallpaper is unchanged.</string>
+    <string name="gustus_app_name" translatable="false">Gustus Weather</string>
+    <string name="now_playing" translatable="false">Now playing</string>
+    <string name="music_playing" translatable="false">Music is playing</string>
+    <string name="paused" translatable="false">Paused</string>
+    <string name="now_playing_keys" translatable="false">"OK  play / pause     ◀ ▶  previous / next     Back  close"</string>
 </resources>

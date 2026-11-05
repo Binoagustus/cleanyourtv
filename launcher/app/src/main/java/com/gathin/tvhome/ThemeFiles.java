@@ -17,7 +17,8 @@ final class ThemeFiles {
         if (segments == null) return null;
         if (segments.size() == 1) {
             String name = segments.get(0);
-            return Config.FILE_NAME.equals(name) || "wallpaper.jpg".equals(name) || "theme_revision".equals(name)
+            return Config.FILE_NAME.equals(name) || "wallpaper.jpg".equals(name)
+                    || "wallpaper_next.jpg".equals(name) || "theme_revision".equals(name)
                     ? name : null;
         }
         if (segments.size() == 2 && WALLPAPERS.equals(segments.get(0))

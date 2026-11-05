@@ -9,6 +9,7 @@ the core bigger or change how it behaves. You install an add-on only if you want
 
 | Add-on | What it does | Author | Tested on | Permissions | Screenshot |
 |---|---|---|---|---|---|
+| [Gustus Wallpaper](christmas-wallpapers/) | Pick a picture on the TV (downloads, or the bundled Christmas tree) and set it as Home's wallpaper | [Binoagustus](https://github.com/Binoagustus) | OnePlus C00, Android TV 11 | `READ_EXTERNAL_STORAGE`, `WRITE_SECURE_SETTINGS` | — |
 | [Jewish Calendar](jewish-calendar/) | Offline Hebrew and Gregorian dates, holiday/Shabbat greetings, and an optional clock screensaver | [lionlev21](https://github.com/lionlev21) | Android TV 12 (model private) | None | <img src="jewish-calendar/screenshot.jpg" width="240" alt="Jewish Calendar on a TV"> |
 | [Nepali Calendar](nepali-calendar/) | Offline Bikram Sambat and Gregorian dates in Devanagari and Latin, a BS month grid with weekends and fixed-date national days in red, and an optional clock screensaver | [@1yuv](https://github.com/1yuv) | Hisense 50A6H4 (SmartTV 4K, songshan), Android TV 11 | None | <img src="nepali-calendar/screenshot.jpg" width="240" alt="Nepali Calendar on a TV"> |
 | [Frigate Glance](frigate-glance/) | Frigate camera pop-ups over whatever is playing | [NickLD](https://github.com/NickLD) | TCL 65Q650G | overlay, accessibility (card keys), network, foreground service, start at boot | <img src="frigate-glance/screenshot.jpg" width="240" alt="Frigate Glance on a TV"> |

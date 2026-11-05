@@ -654,9 +654,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 return true;
             }
         });
-        ((GridLayoutManager) grid.getLayoutManager()).setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
-            @Override public int getSpanSize(int position) { return !singleRow && adapter != null && adapter.isLibraryAt(position) ? COLUMNS : 1; }
-        });
         grid.setHasFixedSize(true);
         grid.setItemAnimator(null);
         // Tiles that scroll out while one is carried come back from the view cache without a rebind; set their
@@ -902,6 +899,29 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             return keyCode == KeyEvent.KEYCODE_DPAD_RIGHT && v.getId() == rightButton;
         };
         btnInputs.setOnKeyListener(pillKeys);
+        if (getResources().getBoolean(R.bool.media_controls)) {
+            mediaBar = new MediaBar(this);
+            // Buttons row: Up leaves for the top bar, Down goes to the progress bar. Progress bar: Up back to the song,
+            // Down returns to the dock tile focus came from.
+            View seekBar = findViewById(R.id.mediaSeek);
+            View.OnKeyListener cardKeys = (v, keyCode, event) -> {
+                if (event.getAction() != KeyEvent.ACTION_DOWN) return false;
+                boolean onSeek = v == seekBar;
+                if (onSeek && keyCode == KeyEvent.KEYCODE_DPAD_UP) return findViewById(R.id.btnMediaSong).requestFocus();
+                if (!onSeek && keyCode == KeyEvent.KEYCODE_DPAD_DOWN && seekBar.isShown()) return seekBar.requestFocus();
+                if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+                    return (btnInputs.getVisibility() == View.VISIBLE ? btnInputs : firstTopButton()).requestFocus();
+                }
+                if (keyCode != KeyEvent.KEYCODE_DPAD_DOWN || adapter.appCount() == 0) return false;
+                focusTile(singleRow ? lastFocused : lastFocused % COLUMNS);
+                return true;
+            };
+            for (int id : new int[]{R.id.btnMediaSong, R.id.btnMediaPrev, R.id.btnMediaPlay, R.id.btnMediaNext, R.id.btnMediaClose, R.id.mediaSeek}) {
+                findViewById(id).setOnKeyListener(cardKeys);
+            }
+            // Sit on the dock's line whenever the card is shown or resized (its height is 0 while gone).
+            findViewById(R.id.mediaCard).addOnLayoutChangeListener((v, l, t, r, bt, ol, ot, or, ob) -> placeMediaCard());
+        }
         btnWifi.setOnKeyListener(pillKeys);
         btnVpn.setOnKeyListener(pillKeys);
         btnSettings.setOnKeyListener(pillKeys);
@@ -909,7 +929,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         btnLibraryTop.setOnKeyListener(pillKeys);
         for (View button : topAppButtons) button.setOnKeyListener(pillKeys);
         if (advancedEffects) {
-            List<View> pills = new ArrayList<>(Arrays.asList(btnInputs, btnWifi, btnVpn, btnReorder, btnLibraryTop, btnSettings));
+            List<View> pills = new ArrayList<>(Arrays.asList(btnInputs, btnWifi, btnVpn, btnReorder, btnLibraryTop, btnSettings,
+                    findViewById(R.id.btnMediaSong), findViewById(R.id.btnMediaPrev), findViewById(R.id.btnMediaPlay),
+                    findViewById(R.id.btnMediaNext), findViewById(R.id.btnMediaClose)));
             pills.addAll(topAppButtons);
             for (View button : pills) {
                 button.setOnFocusChangeListener((view, focused) -> view.animate()
@@ -1051,6 +1073,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     protected void onResume() {
         super.onResume();
         resumed = true;
+        if (mediaBar != null) mediaBar.start();
         // A festival that started or ended while Home was in the background: rebuild with or without it.
         if (festive != festival.active(LocalDate.now())) {
             recreate();
@@ -1270,6 +1293,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     protected void onPause() {
         super.onPause();
         resumed = false;
+        if (mediaBar != null) mediaBar.stop();
         // No UP reaches a paused Home, so a vendor-key hold it saw go down would still open its app later.
         // Only Home's own share is dropped: a key service that saw the same DOWN keeps its hold.
         RemoteKeys.release(this);
@@ -1394,7 +1418,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // taken after that would arm one nothing releases.
         if (resumed && event.getKeyCode() >= 1000 && RemoteKeys.handle(this, event, homeAppKeys.get(event.getKeyCode()),
                 homeHoldAppKeys.get(event.getKeyCode()))) return true;
-        if (handleSettingsKey(event)) return true;
         if (holdOk(event)) return true;
         if (tileMenuEnabled && !reordering && openPopup == null && cardPrompt == null
                 && event.getKeyCode() == KeyEvent.KEYCODE_MENU) {
@@ -1402,11 +1425,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             if (position >= 0 && position < adapter.appCount()
                     && !getPackageName().equals(adapter.packageAt(position))) {
                 if (RemoteKeys.menuReleased(event.getAction(), event.getFlags())) {
-                    onTileLongPress(position, getCurrentFocus());
+                    showTileMenu(position, getCurrentFocus());
                 }
                 return true;
             }
         }
+        if (handleSettingsKey(event)) return true;
         if (!reordering) return super.dispatchKeyEvent(event);
         if (dockEditing) return dispatchDockEdit(event);
         boolean down = event.getAction() == KeyEvent.ACTION_DOWN;
@@ -1820,6 +1844,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             springX.animateToFinalPosition(x - glassScrollShiftX);
             springY.animateToFinalPosition(y - glassScrollShift);
         }
+        if (animations && !reducedMotion) glass.sweep();   // one streak of light as it lands
         View item = (View) card.getParent();
         if (dockRow && (singleRow || position < COLUMNS)) {
             // Dock: park it at the bottom of the screen and show the top shelf for this app. In a single row
@@ -1862,7 +1887,21 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     // ---- top shelf -------------------------------------------------------------------------------
 
+    /** Up from the dock: the card's progress bar, else its song; false when no card is showing. */
+    private boolean focusMediaCard() {
+        View seekBar = findViewById(R.id.mediaSeek), song = findViewById(R.id.btnMediaSong);
+        return seekBar.isShown() ? seekBar.requestFocus() : song.isShown() && song.requestFocus();
+    }
+
+    /** Keeps the Now Playing card just above the dock's glass. */
+    private void placeMediaCard() {
+        View card = findViewById(R.id.mediaCard);
+        if (mediaDockTop > 0) card.setY(mediaDockTop - 48 * density - card.getHeight());
+    }
+
     private void showHero(int position, float dockTopInRoot) {
+        mediaDockTop = dockTopInRoot;
+        if (mediaBar != null) placeMediaCard();
         String label = adapter.labelAt(position);
         int color = adapter.ambientColorAt(position);
         float y = dockTopInRoot - 14 * density - 26 * density - hero.getHeight();
@@ -2388,7 +2427,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (singleRow) {
             // One row: Up leaves for the top bar, Down has nowhere to go, and Left/Right walk the whole row,
             // stopping at its two ends (the default focus search scrolls the row to the next tile).
-            if (keyCode == KeyEvent.KEYCODE_DPAD_UP) return false;
+            if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+                return focusMediaCard();
+            }
             if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN) return true;
             boolean forward = rtlAppGrid ? keyCode == KeyEvent.KEYCODE_DPAD_LEFT : keyCode == KeyEvent.KEYCODE_DPAD_RIGHT;
             int last = adapter.focusablePosition(count - 1);
@@ -2412,7 +2453,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                     rtlAppGrid, keyCode == KeyEvent.KEYCODE_DPAD_LEFT);
         }
         if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
-            if (position < COLUMNS) return false;          // dock row: let focus move to the top bar
+            if (position < COLUMNS) {                       // dock row: the Now Playing card if shown, else the top bar
+                return focusMediaCard();
+            }
             target = position - COLUMNS;
         } else {
             int lastRowStart = ((count - 1) / COLUMNS) * COLUMNS;
@@ -2477,6 +2520,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         return findViewById(R.id.btnSettings);
     }
+
+    /** Home's playback controls (media_controls), or null. */
+    private MediaBar mediaBar;
+    private float mediaDockTop;
 
     /** top_bar_apps buttons, in bar order. */
     private final List<View> topAppButtons = new ArrayList<>();
@@ -3630,15 +3677,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     /**
-     * Hold OK on a tile: a glass menu next to it. Move starts reorder mode with this tile already picked up;
-     * Remove from Home takes the shortcut off (only with the app library on, where one press adds it back);
-     * App info opens the TV's page for the app, which is what holding OK used to do.
+     * Hold OK picks up the tile for arrow-key reordering. The Menu key opens its quick options,
+     * including Remove from Home and App info.
      */
     // ---- hold OK ---------------------------------------------------------------------------------
     // View's own long click misses on some remotes: an IR remote that sends its repeat frames as separate
     // presses, or a Bluetooth one whose repeats land after a tile rebind, never holds one DOWN long enough.
     // So the launcher times the hold itself: OK down on a tile, still down (or still repeating) after
-    // HOLD_OK_MS opens the tile menu, and the UP that follows is eaten so it doesn't also open the app.
+    // HOLD_OK_MS picks up the tile, and the UP that follows is eaten so it doesn't also open the app.
 
     private static final long HOLD_OK_MS = 550;
     private long holdOkDown = -1;
@@ -3652,7 +3698,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 || code == KeyEvent.KEYCODE_NUMPAD_ENTER || code == KeyEvent.KEYCODE_BUTTON_A;
     }
 
-    /** True when the event belongs to a hold that opened the tile menu and must not reach the tile. */
+    /** True when the event belongs to a hold that picked up a tile and must not reach its click listener. */
     private boolean holdOk(KeyEvent event) {
         if (!tileMenuEnabled || !isOkKey(event.getKeyCode())) return false;
         if (event.getAction() == KeyEvent.ACTION_DOWN) {
@@ -3718,6 +3764,18 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     @Override
     public void onTileLongPress(int position, View card) {
+        if (reordering || openPopup != null || position >= adapter.movableCount()) return;
+        String key = adapter.keyAt(position);
+        if (key == null || !beginReorder()) return;
+        int at = adapter.positionOf(key);
+        if (at < 0) return;
+        holdOkFired = true;
+        handler.removeCallbacks(holdOkTimer);
+        focusTile(at);
+        pickUp(at);
+    }
+
+    private void showTileMenu(int position, View card) {
         if (reordering || openPopup != null) return;
         String key = adapter.keyAt(position);
         String pkg = adapter.packageAt(position);
@@ -3731,14 +3789,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             addSettingsMenuRow(rows, popup, inDock ? R.string.tile_replace_in_dock : R.string.tile_add_to_dock,
                     () -> startDockEditFor(key, inDock));
         }
-        if (position < adapter.movableCount()) addSettingsMenuRow(rows, popup, R.string.tile_move, () -> {
-            if (!beginReorder()) return;
-            int at = adapter.positionOf(key);   // beginReorder can rebuild the tiles
-            if (at < 0) return;
-            focusTile(at);
-            pickUp(at);
-            Toast.makeText(this, R.string.reorder_hint, Toast.LENGTH_LONG).show();
-        });
+        if (position < adapter.movableCount()) addSettingsMenuRow(rows, popup, R.string.tile_move,
+                () -> onTileLongPress(adapter.positionOf(key), null));
         if (appLibraryEnabled) addSettingsMenuRow(rows, popup, R.string.library_remove_shortcut, () -> {
             if (LibraryApps.save(this, pkg, false)) reloadApps(false);
             else Toast.makeText(this, R.string.library_save_failed, Toast.LENGTH_LONG).show();

@@ -1,0 +1,14 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+    <uses-feature android:name="android.software.leanback" android:required="false" />
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+    <!-- Your downloaded pictures (Sofa, File Manager); granted once over ADB. -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <!-- Hands the chosen picture to the launcher's theme provider; granted once over ADB. -->
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" tools:ignore="ProtectedPermissions" />
+    <queries><provider android:authorities="com.gathin.tvhome.theme" /></queries>
+    <application android:label="Gustus Wallpaper" android:icon="@drawable/tree" android:banner="@drawable/banner" android:allowBackup="false" android:theme="@android:style/Theme.Material.NoActionBar.Fullscreen">
+        <activity android:name=".WallpaperActivity" android:exported="true" android:screenOrientation="landscape" android:excludeFromRecents="true">
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LEANBACK_LAUNCHER" /></intent-filter>
+        </activity>
+    </application>
+</manifest>

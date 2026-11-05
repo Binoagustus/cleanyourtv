@@ -1,0 +1,7 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="48dp" android:height="48dp" android:viewportWidth="48" android:viewportHeight="48">
+    <!-- Gustus Wallpaper: a framed twilight landscape with a moon. -->
+    <path android:fillColor="#FF2B2350" android:pathData="M10,2h28a8,8 0,0 1,8 8v28a8,8 0,0 1,-8 8h-28a8,8 0,0 1,-8 -8v-28a8,8 0,0 1,8 -8z" />
+    <path android:fillColor="#FFF6E7C1" android:pathData="M32,15m-5,0a5,5 0,1 1,10 0a5,5 0,1 1,-10 0" />
+    <path android:fillColor="#FF5B4790" android:pathData="M2,32L14,22L22,29L32,20L46,30V38a8,8 0,0 1,-8 8h-28a8,8 0,0 1,-8 -8Z" />
+    <path android:fillColor="#FF1E1840" android:pathData="M2,40L16,32L28,38L46,33V38a8,8 0,0 1,-8 8h-28a8,8 0,0 1,-8 -8Z" />
+</vector>

@@ -454,6 +454,20 @@
     <bool name="show_stats">false</bool>
     <!-- This TV's live download/upload readout, active only while Home is visible. -->
     <bool name="show_network_speed">true</bool>
+    <bool name="muted_tiles">true</bool>
+    <!-- More as two rows of full cards (TV artwork, a quiet name), growing out of the More tile when it opens. -->
+    <bool name="library_cards">true</bool>
+    <!-- Play/pause, next and the song in the top bar while music plays; needs
+         cmd notification allow_listener com.gathin.tvhome/.MediaAccess once. -->
+    <bool name="media_controls">true</bool>
+    <string name="media_play" translatable="false">Play</string>
+    <string name="media_pause" translatable="false">Pause</string>
+    <string name="media_next" translatable="false">Next</string>
+    <string name="media_previous" translatable="false">Previous</string>
+    <string name="media_seek" translatable="false">Song position</string>
+    <string name="media_close" translatable="false">Pause and hide</string>
+    <string name="library_move" translatable="false">Move</string>
+    <string name="library_moving" translatable="false">◀ ▶ ▲ ▼ move  ·  OK done</string>
 
     <!-- Each team's next game in the F1 panel's place under the clock, rotating with the theme's F1 weekend: the package
          of an add-on that publishes them (the Game Day add-on: io.github.justinnewman.gameday; contract in docs/modules.md).

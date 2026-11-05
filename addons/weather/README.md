@@ -16,6 +16,16 @@ sky-blue glow; on any other Android TV home it is an ordinary app.
   "light rain" at 1 °C (ICON and GFS did, in a Ulaanbaatar blizzard). The app decides by the wet-bulb
   temperature instead, which counts how dry the air is: at 1 °C or below, rain and drizzle are shown as snow.
 - It reads Open-Meteo only while the page is on screen, every 30 minutes, or 5 minutes after a failure.
+- **Live sky.** The page and the screensaver animate the weather that is reported: rain in depth layers slanted by
+  the wind, snow, lightning, drifting cloud and fog, the sun's glow or stars, at most 30 frames a second.
+- **Screensaver "Weather and calendar":** Home's wallpaper (read from the launcher with `WRITE_SECURE_SETTINGS`,
+  granted once over ADB), the clock and date, this month with today marked, the weather now and the next three days.
+  While music plays it shows **Now Playing** instead: the cover over a blurred copy of it, the song, its progress,
+  and the remote's OK (play/pause), Left/Right (previous/next). Needs notification access for the listener:
+  `adb shell cmd notification allow_listener io.github.sumyabazar1.weather/.NowPlayingListener`.
+- **Set as Home wallpaper:** a picture opened or shared from another app can be sent here to become Home's wallpaper.
+- **Default place:** `default_place`, `default_latitude` and `default_longitude` in `options.xml` set the place
+  until **Change city** picks another; left empty, the page asks on first open as before.
 - Degrees Celsius by default (Fahrenheit is an option below); English or French words, with the TV's language; day names follow the TV's language.
 
 ## Options

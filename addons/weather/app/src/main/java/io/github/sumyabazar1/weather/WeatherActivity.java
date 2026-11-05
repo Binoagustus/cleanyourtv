@@ -2,6 +2,7 @@ package io.github.sumyabazar1.weather;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
@@ -13,6 +14,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -38,6 +40,7 @@ public final class WeatherActivity extends Activity {
     private SharedPreferences place;
     private View root;
     private View content;
+    private SkyView sky;
     private TextView message;
     private boolean shown;
     /** options.xml: days after today, and the extras on the "Feels like" line. */
@@ -52,13 +55,15 @@ public final class WeatherActivity extends Activity {
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         setContentView(R.layout.activity_weather);
-        place = getSharedPreferences(PREFS, MODE_PRIVATE);
+        place = place(this);
         forecastDays = Forecast.forecastDays(getResources().getInteger(R.integer.forecast_days));
         showHumidity = getResources().getBoolean(R.bool.show_humidity);
         showWind = getResources().getBoolean(R.bool.show_wind);
         fahrenheit = "f".equalsIgnoreCase(getString(R.string.temperature_unit).trim());
         bothUnits = getResources().getBoolean(R.bool.show_both_units);
         root = findViewById(R.id.root);
+        sky = new SkyView(this);
+        ((FrameLayout) root).addView(sky, 0, new FrameLayout.LayoutParams(-1, -1));
         content = findViewById(R.id.content);
         message = findViewById(R.id.message);
         View changeCity = findViewById(R.id.changeCity);
@@ -88,6 +93,23 @@ public final class WeatherActivity extends Activity {
         io.shutdownNow();
     }
 
+    /**
+     * The kept place; the first time, the place set in options.xml (default_place), until Change city picks another.
+     * A new default in options.xml replaces the old default, never a city picked with Change city.
+     */
+    static SharedPreferences place(Context context) {
+        SharedPreferences place = context.getSharedPreferences(PREFS, MODE_PRIVATE);
+        String name = context.getString(R.string.default_place).trim();
+        boolean defaultKept = !place.contains("name") || place.getString("name", "").equals(place.getString("seed", "Tirunelveli"));
+        if (defaultKept && !name.isEmpty() && !name.equals(place.getString("name", ""))) {
+            place.edit().putString("name", name).putString("seed", name)
+                    .putLong("lat", Double.doubleToRawLongBits(Double.parseDouble(context.getString(R.string.default_latitude))))
+                    .putLong("lon", Double.doubleToRawLongBits(Double.parseDouble(context.getString(R.string.default_longitude))))
+                    .apply();
+        }
+        return place;
+    }
+
     private void refresh() {
         main.removeCallbacks(tick);
         double lat = Double.longBitsToDouble(place.getLong("lat", 0));
@@ -112,6 +134,7 @@ public final class WeatherActivity extends Activity {
     private void show(Forecast.Report r) {
         shown = true;
         root.setBackground(Forecast.backdrop(r.code, r.day));
+        sky.setWeather(r.code, r.day);
         ((TextView) findViewById(R.id.place)).setText(place.getString("name", ""));
         ((TextView) findViewById(R.id.temp)).setText(Forecast.degrees(r.tempC, fahrenheit) + "°");
         ((TextView) findViewById(R.id.sky)).setText(Forecast.sky(r.code, r.day));
