@@ -95,40 +95,10 @@ final class WallpaperPlayer {
         if (config.wallpaperEnabled && !files.isEmpty()) {
             root.addView(image, 0, new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-            showFirst();
         }
     }
 
-    /**
-     * The picture Home opens with is decoded right here, on the main thread, as the single wallpaper always was:
-     * Home's first frame already has it instead of drawing the plain colour and the picture popping in later.
-     * Only the later changes of a rotation decode in the background.
-     */
-    private void showFirst() {
-        String previous = preferences.getString("image", "");
-        List<File> playable = playable();
-        File first = WallpaperRotation.find(playable, previous);
-        if (first == null) first = WallpaperRotation.pick(playable, previous, order, random);
-        while (first != null) {
-            Bitmap bitmap = decode(first);
-            if (bitmap != null) {
-                show(bitmap);
-                // The picture covers the whole screen: the root's plain colour under it is overdraw.
-                root.setBackground(null);
-                displayed = first.getName();
-                showCaption(false);
-                if (!displayed.equals(previous)) {
-                    preferences.edit().putString("image", displayed)
-                            .putLong("changed", System.currentTimeMillis()).apply();
-                }
-                return;
-            }
-            files.remove(first);   // unreadable or over 4K: try another, or keep the plain colour
-            playable = playable();
-            first = WallpaperRotation.pick(playable, previous, order, random);
-        }
-    }
-
+    // The existing decoder loads the first wallpaper too, so Home can draw its controls immediately.
     void start() {
         active = true;
         update();
